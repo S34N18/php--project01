@@ -1,10 +1,10 @@
 <?php
 session_start();
-include './conn.php';
+include '../db/conn.php';
 
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: ../auth/login.php");
     exit;
 }
 
@@ -34,13 +34,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Please enter a valid email address";
     } else {
         // Check if email already exists
-        $check_email = "SELECT * FROM users WHERE email = :email";
-        $stmt = $conn->prepare($check_email);
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        
-        if ($stmt->rowCount() > 0) {
-            $errors[] = "Email already exists. Please use a different email";
+        try {
+            $check_email = "SELECT * FROM users WHERE email = :email";
+            $stmt = $conn->prepare($check_email);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                $errors[] = "Email already exists. Please use a different email";
+            }
+        } catch(PDOException $e) {
+            $errors[] = "Database error: " . $e->getMessage();
         }
     }
     
@@ -100,20 +104,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="dashboard.php" class="text-xl font-bold text-gray-800">Admin Panel</a>
+                    <a href="admin_dashboard.php" class="text-xl font-bold text-gray-800">Admin Panel</a>
                 </div>
                 <div class="flex items-center space-x-4">
                     <span class="text-gray-700">
                         Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>
                         <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded ml-2">Admin</span>
                     </span>
-                    <a href="dashboard.php" class="text-blue-600 hover:text-blue-800">
+                    <a href="admin_dashboard.php" class="text-blue-600 hover:text-blue-800">
                         Dashboard
                     </a>
                     <a href="admin_panel.php" class="text-blue-600 hover:text-blue-800">
                         User Management
                     </a>
-                    <a href="logout.php" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <a href="../auth/logout.php" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium">
                         Logout
                     </a>
                 </div>
@@ -128,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             <?php if (!empty($message)): ?>
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
-                    <p><?php echo $message; ?></p>
+                    <p><?php echo htmlspecialchars($message); ?></p>
                 </div>
             <?php endif; ?>
             
@@ -136,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
                     <ul class="mt-1 list-disc list-inside">
                         <?php foreach ($errors as $error): ?>
-                            <li><?php echo $error; ?></li>
+                            <li><?php echo htmlspecialchars($error); ?></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>

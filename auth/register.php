@@ -1,7 +1,6 @@
-
 <?php
 session_start();
-include './conn.php';
+include '../db/conn.php';
 
 // Define variables to store error messages
 $errors = [];
@@ -29,13 +28,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Please enter a valid email address";
     } else {
         // Check if email already exists
-        $check_email = "SELECT * FROM users WHERE email = :email";
-        $stmt = $conn->prepare($check_email);
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        
-        if ($stmt->rowCount() > 0) {
-            $errors[] = "Email already exists. Please use a different email or login";
+        try {
+            $check_email = "SELECT * FROM users WHERE email = :email";
+            $stmt = $conn->prepare($check_email);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                $errors[] = "Email already exists. Please use a different email or login";
+            }
+        } catch(PDOException $e) {
+            $errors[] = "Database error: " . $e->getMessage();
         }
     }
     
@@ -95,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <strong class="font-bold">Please fix the following errors:</strong>
                 <ul class="mt-1 list-disc list-inside">
                     <?php foreach ($errors as $error): ?>
-                        <li><?php echo $error; ?></li>
+                        <li><?php echo htmlspecialchars($error); ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
@@ -105,26 +108,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <input type="text" name="username" id="username" value="<?php echo htmlspecialchars($username ?? ''); ?>"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
 
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input type="email" name="email" id="email" value="<?php echo htmlspecialchars($email ?? ''); ?>"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
 
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <input type="password" name="password" id="password"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <p class="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
             </div>
             
             <div>
                 <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                 <input type="password" name="confirm_password" id="confirm_password"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
 
             <button type="submit"
