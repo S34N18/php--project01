@@ -68,11 +68,11 @@ $role = $_SESSION['role'] ?? 'user';
             <div class="mt-8">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Your Articles</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <a href="my_articles.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
+                    <a href="./my_articles.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
                         <h3 class="text-lg font-medium text-gray-900">My Articles</h3>
                         <p class="text-gray-600">View and manage articles you've created</p>
                     </a>
-                    <a href="create_article.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
+                    <a href="./create_article.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
                         <h3 class="text-lg font-medium text-gray-900">Create New Article</h3>
                         <p class="text-gray-600">Write and publish a new article</p>
                     </a>

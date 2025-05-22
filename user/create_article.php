@@ -9,8 +9,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 // Database connection (adjust these settings to match your database)
 $host = 'localhost';
-$dbname = 'your_database_name';
-$username_db = 'your_db_username';
+$dbname = 'mywebsite';
+$username_db = 'root';
 $password_db = 'your_db_password';
 
 try {
