@@ -1,24 +1,17 @@
 <?php
 session_start();
 
-// Redirect if not logged in
+// Check if user is logged in
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../auth/login.php");
     exit;
 }
 
-// Only allow users with the 'user' role
-if ($_SESSION['role'] !== 'user') {
-    $_SESSION['error_message'] = "Only users can create articles.";
-    header("Location: ./user_dashboard.php");
-    exit;
-}
-
-// Database configuration - UPDATE THESE WITH YOUR ACTUAL DATABASE CREDENTIALS
-$host = 'localhost';        // Your database host
-$dbname = 'mywebsite';  // Your database name
-$username_db = 'root';  // Your database username
-$password_db = '';  // Your database password
+// Database configuration
+$host = 'localhost';
+$dbname = 'mywebsite';
+$username_db = 'root';
+$password_db = '';
 
 // Database connection
 try {
@@ -28,39 +21,61 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
+$author_id = $_SESSION['user_id'];
+$article_id = $_GET['id'] ?? null;
 $success_message = '';
 $error_message = '';
 
+// Validate article ID
+if (!$article_id || !is_numeric($article_id)) {
+    $_SESSION['error_message'] = "Invalid article ID.";
+    header("Location: my_articles.php");
+    exit;
+}
+
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = trim($_POST['title']);
-    $content = trim($_POST['content']);
-    $category = trim($_POST['category']);
-    $status = $_POST['status'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title = trim($_POST['title'] ?? '');
+    $content = trim($_POST['content'] ?? '');
+    $category = trim($_POST['category'] ?? '');
+    $status = $_POST['status'] ?? 'draft';
     
-    // Check if user_id exists in session
-    if (!isset($_SESSION['user_id'])) {
-        $error_message = "User ID not found in session. Please log out and log back in.";
+    // Validate inputs
+    if (empty($title) || empty($content)) {
+        $error_message = "Title and content are required.";
     } else {
-        $author_id = $_SESSION['user_id'];
-        
-        // Validate inputs
-        if (empty($title) || empty($content)) {
-            $error_message = "Title and content are required.";
-        } else {
-            try {
-                $stmt = $pdo->prepare("INSERT INTO articles (title, content, category, status, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())");
-                $stmt->execute([$title, $content, $category, $status, $author_id]);
-                $success_message = "Article created successfully!";
-                
-                // Clear form data after successful submission
-                $title = $content = $category = '';
-                $status = 'draft'; // Reset to default
-            } catch(PDOException $e) {
-                $error_message = "Error creating article: " . $e->getMessage();
+        try {
+            $stmt = $pdo->prepare("UPDATE articles SET title = ?, content = ?, category = ?, status = ?, updated_at = NOW() WHERE id = ? AND author_id = ?");
+            $result = $stmt->execute([$title, $content, $category, $status, $article_id, $author_id]);
+            
+            if ($stmt->rowCount() > 0) {
+                $_SESSION['success_message'] = "Article updated successfully!";
+                header("Location: my_articles.php");
+                exit;
+            } else {
+                $error_message = "No changes were made or article not found.";
             }
+        } catch(PDOException $e) {
+            $error_message = "Error updating article: " . $e->getMessage();
         }
     }
+}
+
+// Load article to edit
+try {
+    $stmt = $pdo->prepare("SELECT * FROM articles WHERE id = ? AND author_id = ?");
+    $stmt->execute([$article_id, $author_id]);
+    $article = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$article) {
+        $_SESSION['error_message'] = "Article not found or access denied.";
+        header("Location: my_articles.php");
+        exit;
+    }
+} catch(PDOException $e) {
+    $_SESSION['error_message'] = "Error loading article: " . $e->getMessage();
+    header("Location: my_articles.php");
+    exit;
 }
 
 $username = $_SESSION['username'] ?? 'User';
@@ -72,7 +87,7 @@ $role = $_SESSION['role'] ?? 'user';
     <script src="https://cdn.tailwindcss.com"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Article - My Website</title>
+    <title>Edit Article - My Website</title>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Navigation -->
@@ -109,9 +124,9 @@ $role = $_SESSION['role'] ?? 'user';
     <main class="max-w-4xl mx-auto mt-10 px-4">
         <div class="bg-white rounded-xl shadow-md p-6">
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Create New Article</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Edit Article</h1>
                 <a href="my_articles.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                    View My Articles
+                    Back to My Articles
                 </a>
             </div>
 
@@ -134,7 +149,7 @@ $role = $_SESSION['role'] ?? 'user';
                         type="text" 
                         id="title" 
                         name="title" 
-                        value="<?php echo htmlspecialchars($title ?? ''); ?>"
+                        value="<?php echo htmlspecialchars($article['title']); ?>"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                     >
@@ -148,13 +163,13 @@ $role = $_SESSION['role'] ?? 'user';
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                         <option value="">Select a category</option>
-                        <option value="Technology" <?php echo (isset($category) && $category === 'Technology') ? 'selected' : ''; ?>>Technology</option>
-                        <option value="Lifestyle" <?php echo (isset($category) && $category === 'Lifestyle') ? 'selected' : ''; ?>>Lifestyle</option>
-                        <option value="Travel" <?php echo (isset($category) && $category === 'Travel') ? 'selected' : ''; ?>>Travel</option>
-                        <option value="Food" <?php echo (isset($category) && $category === 'Food') ? 'selected' : ''; ?>>Food</option>
-                        <option value="Business" <?php echo (isset($category) && $category === 'Business') ? 'selected' : ''; ?>>Business</option>
-                        <option value="Health" <?php echo (isset($category) && $category === 'Health') ? 'selected' : ''; ?>>Health</option>
-                        <option value="Other" <?php echo (isset($category) && $category === 'Other') ? 'selected' : ''; ?>>Other</option>
+                        <option value="Technology" <?php echo ($article['category'] === 'Technology') ? 'selected' : ''; ?>>Technology</option>
+                        <option value="Lifestyle" <?php echo ($article['category'] === 'Lifestyle') ? 'selected' : ''; ?>>Lifestyle</option>
+                        <option value="Travel" <?php echo ($article['category'] === 'Travel') ? 'selected' : ''; ?>>Travel</option>
+                        <option value="Food" <?php echo ($article['category'] === 'Food') ? 'selected' : ''; ?>>Food</option>
+                        <option value="Business" <?php echo ($article['category'] === 'Business') ? 'selected' : ''; ?>>Business</option>
+                        <option value="Health" <?php echo ($article['category'] === 'Health') ? 'selected' : ''; ?>>Health</option>
+                        <option value="Other" <?php echo ($article['category'] === 'Other') ? 'selected' : ''; ?>>Other</option>
                     </select>
                 </div>
 
@@ -167,7 +182,7 @@ $role = $_SESSION['role'] ?? 'user';
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Write your article content here..."
                         required
-                    ><?php echo htmlspecialchars($content ?? ''); ?></textarea>
+                    ><?php echo htmlspecialchars($article['content']); ?></textarea>
                 </div>
 
                 <div>
@@ -177,20 +192,20 @@ $role = $_SESSION['role'] ?? 'user';
                         name="status"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                        <option value="draft" <?php echo (isset($status) && $status === 'draft') ? 'selected' : ''; ?>>Draft</option>
-                        <option value="published" <?php echo (isset($status) && $status === 'published') ? 'selected' : ''; ?>>Published</option>
+                        <option value="draft" <?php echo ($article['status'] === 'draft') ? 'selected' : ''; ?>>Draft</option>
+                        <option value="published" <?php echo ($article['status'] === 'published') ? 'selected' : ''; ?>>Published</option>
                     </select>
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <a href="user_dashboard.php" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md text-sm font-medium">
+                    <a href="my_articles.php" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md text-sm font-medium">
                         Cancel
                     </a>
                     <button 
                         type="submit" 
                         class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium"
                     >
-                        Create Article
+                        Update Article
                     </button>
                 </div>
             </form>

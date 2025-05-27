@@ -10,7 +10,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 // Database connection (adjust these settings to match your database)
 $host = 'localhost';
 $dbname = 'mywebsite';
-$username_db = '';
+$username_db = 'root';
 $password_db = '';
 
 try {
@@ -98,11 +98,11 @@ $role = $_SESSION['role'] ?? 'user';
                             <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded ml-2">Admin</span>
                         <?php endif; ?>
                     </span>
-                    <a href="user_dashboard.php" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <a href="./user_dashboard.php" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium">
                         Dashboard
                     </a>
                     <?php if ($role === 'admin'): ?>
-                        <a href="admin_dashboard.php" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        <a href="../admin/admin_dashboard.php" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium">
                             Admin Dashboard
                         </a>
                     <?php endif; ?>
@@ -207,11 +207,11 @@ $role = $_SESSION['role'] ?? 'user';
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2 ml-4">
-                                    <a href="edit_article.php?id=<?php echo $article['id']; ?>" 
+                                    <a href="./edit_article.php?id=<?php echo $article['id']; ?>" 
                                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium">
                                         Edit
                                     </a>
-                                    <a href="view_article.php?id=<?php echo $article['id']; ?>" 
+                                    <a href="./view_article_user.php?id=<?php echo $article['id']; ?>" 
                                        class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm font-medium">
                                         View
                                     </a>

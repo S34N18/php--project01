@@ -75,14 +75,11 @@ $username = $_SESSION['username'] ?? 'Admin';
             <div class="mt-8">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Articles Management</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <a href="manage_articles.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
+                    <a href="./manage_article.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
                         <h3 class="text-lg font-medium text-gray-900">Manage Articles</h3>
                         <p class="text-gray-600">View, edit, and delete all user articles</p>
                     </a>
-                    <a href="create_article.php" class="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50">
-                        <h3 class="text-lg font-medium text-gray-900">Create Article</h3>
-                        <p class="text-gray-600">Create new articles for the website</p>
-                    </a>
+                    
                 </div>
             </div>
         </div>
